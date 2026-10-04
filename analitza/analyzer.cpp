@@ -1842,6 +1842,8 @@ Expression Analyzer::dependenciesToLambda() const
 {
     if(m_hasdeps && m_exp.tree()) {
         QStringList deps=dependencies(m_exp.tree(), m_vars->keys());
+        // Inferred function signatures must not depend on the QSet hash seed.
+        deps.sort();
         Container* cc=new Container(Container::lambda);
         foreach(const QString& dep, deps) {
             Container* bvar=new Container(Container::bvar);

@@ -17,3 +17,5 @@ ecm_add_test(
         matchingtest.cpp ../substituteexpression.cpp ../abstractexpressiontransformer.cpp
     LINK_LIBRARIES ${testLibs}
 )
+
+ecm_add_test(dependenciestest.cpp LINK_LIBRARIES Qt::Test Analitza)
