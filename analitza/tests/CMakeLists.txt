@@ -8,6 +8,7 @@ ecm_add_tests(
     typechecktest.cpp
     builtintest.cpp
     commandstest.cpp
+    overloadtest.cpp
 
     LINK_LIBRARIES ${testLibs}
 )

@@ -43,11 +43,16 @@ Variables::Variables(const Variables& v) : QHash<QString, Object*>(v)
     QHash<QString, Object*>::iterator i;
     for (i = this->begin(); i != this->end(); ++i)
         *i = (*i)->copy();
+    for (auto functions = v.m_functionOverloads.cbegin(); functions != v.m_functionOverloads.cend(); ++functions)
+        for (auto function = functions->cbegin(); function != functions->cend(); ++function)
+            m_functionOverloads[functions.key()].insert(function.key(), function.value()->copy());
 }
 
 Variables::~Variables()
 {
     qDeleteAll(*this);
+    for (const auto& functions : std::as_const(m_functionOverloads))
+        qDeleteAll(functions);
 }
 
 void Variables::modify(const QString & name, const Expression & e)
@@ -61,6 +66,7 @@ void Variables::modify(const QString & name, const Expression & e)
 
 Cn* Variables::modify(const QString & name, const double & d)
 {
+    clearFunctionOverloads(name);
     iterator it = find(name);
     if(it==end() || (*it)->type()!=Object::value) {
         Cn* val=new Cn(d);
@@ -75,6 +81,7 @@ Cn* Variables::modify(const QString & name, const double & d)
 
 void Variables::modify(const QString& name, const Object* o)
 {
+    clearFunctionOverloads(name);
     delete value(name);
     
     insert(name, o->copy());
@@ -83,7 +90,29 @@ void Variables::modify(const QString& name, const Object* o)
 void Variables::rename(const QString& orig, const QString& dest)
 {
     Q_ASSERT(contains(orig));
+    clearFunctionOverloads(dest);
+    if (m_functionOverloads.contains(orig))
+        m_functionOverloads.insert(dest, m_functionOverloads.take(orig));
     insert(dest, take(orig));
+}
+
+void Variables::clearFunctionOverloads(const QString& name)
+{
+    qDeleteAll(m_functionOverloads.take(name));
+}
+
+void Variables::setFunctionOverload(const QString& name, const Expression& function)
+{
+    Q_ASSERT(contains(name) && function.isLambda());
+    auto& functions = m_functionOverloads[name];
+    const int count = function.bvarList().size();
+    delete functions.value(count);
+    functions.insert(count, function.tree()->copy());
+}
+
+const Object* Variables::functionOverload(const QString& name, int argumentCount) const
+{
+    return contains(name) ? m_functionOverloads.value(name).value(argumentCount) : nullptr;
 }
 
 Expression Variables::valueExpression(const QString& name) const

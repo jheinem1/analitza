@@ -86,8 +86,16 @@ class ANALITZA_EXPORT Variables : public QHash<QString, Object*>
         
         /** @returns the expression contained by the @p name identifier. */
         Expression valueExpression(const QString& name) const;
+
+        /** Adds an alternative lambda selected by argument count when calling a named function.
+         * Redefining the variable removes its alternatives. */
+        void setFunctionOverload(const QString& name, const Expression& function);
+        const Object* functionOverload(const QString& name, int argumentCount) const;
          
         QString toString() const;
+    private:
+        QHash<QString, QHash<int, Object*>> m_functionOverloads;
+        void clearFunctionOverloads(const QString& name);
 };
 
 }

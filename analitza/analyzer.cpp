@@ -437,7 +437,15 @@ Object* Analyzer::eval(const Object* branch, bool resolve, const QSet<QString>& 
             case Operator::function: {
                 //it is a function. I'll take only this case for the moment
                 //it is only meant for operations with scoped variables that _change_ its value => have a value
-                Object* body=simp(eval(c->m_params[0], true, unscoped));
+                const Object* callee = c->m_params[0];
+                if (callee->type() == Object::variable) {
+                    const auto variable = static_cast<const Ci*>(callee);
+                    if (variable->depth() < 0 && !unscoped.contains(variable->name())) {
+                        if (const auto overload = m_vars->functionOverload(variable->name(), c->m_params.size()-1))
+                            callee = overload;
+                    }
+                }
+                Object* body=simp(eval(callee, true, unscoped));
                 
                 const Container *cbody = dynamic_cast<Container*>(body);
                 if(resolve && cbody && cbody->m_params.size()==c->m_params.size() && cbody->containerType()==Container::lambda) {
@@ -1014,6 +1022,13 @@ Object* Analyzer::func(const Apply& n)
 {
     bool borrowed = n.m_params[0]->type()==Object::variable;
     Container *function = static_cast<Container*>(borrowed ? variableValue((Ci*) n.m_params[0]) : calc(n.m_params[0]));
+    if (borrowed) {
+        const auto variable = static_cast<const Ci*>(n.m_params[0]);
+        if (variable->depth() < 0) {
+            if (const auto overload = m_vars->functionOverload(variable->name(), n.m_params.size()-1))
+                function = const_cast<Container*>(static_cast<const Container*>(overload));
+        }
+    }
     
 //     static int ind=0;
 //     qDebug() << "calling" << qPrintable(QString(++ind, '.')) << n.m_params.first()->toString() << n.toString();

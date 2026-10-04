@@ -495,7 +495,15 @@ QVariant ExpressionTypeChecker::visit(const Apply* c)
             break;
         case Operator::function: {
 //                     qDebug() << "calling" << c->toString();
-            c->m_params.first()->accept(this);
+            const Object* callee = c->m_params.first();
+            if (callee->type() == Object::variable) {
+                const auto variable = static_cast<const Ci*>(callee);
+                if (variable->depth() < 0 && !m_lambdascope.contains(variable->name())) {
+                    if (const auto overload = m_v->functionOverload(variable->name(), c->m_params.size()-1))
+                        callee = overload;
+                }
+            }
+            callee->accept(this);
 //                     qDebug() << "retrieved lambda" << c->m_params.first()->toString() << current << current.assumptions();
             ExpressionType returned = current;
             assumptions=current.assumptions();
