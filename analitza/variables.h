@@ -78,6 +78,8 @@ class ANALITZA_EXPORT Variables : public QHash<QString, Object*>
         *    The @p orig named variable will be called @p dest , then @p orig will be removed.
         */
         void rename(const QString& orig, const QString& dest);
+        /** Removes a variable and all of its argument-count overloads. */
+        qsizetype remove(const QString& name);
         
         /**
          * Adds again the initial constants

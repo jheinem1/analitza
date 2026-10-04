@@ -96,6 +96,16 @@ void Variables::rename(const QString& orig, const QString& dest)
     insert(dest, take(orig));
 }
 
+qsizetype Variables::remove(const QString& name)
+{
+    clearFunctionOverloads(name);
+    auto object = take(name);
+    if (!object)
+        return 0;
+    delete object;
+    return 1;
+}
+
 void Variables::clearFunctionOverloads(const QString& name)
 {
     qDeleteAll(m_functionOverloads.take(name));

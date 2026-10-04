@@ -31,6 +31,17 @@ private Q_SLOTS:
         analyzer.setExpression(Analitza::Expression(QStringLiteral("f()")));
         QVERIFY(!analyzer.isCorrect());
     }
+    void removalDoesNotLeaveAnOverload()
+    {
+        Analitza::Variables variables;
+        variables.modify(QStringLiteral("f"), Analitza::Expression(QStringLiteral("(x,y)->x-y")));
+        variables.setFunctionOverload(QStringLiteral("f"), Analitza::Expression(QStringLiteral("x->x")));
+        QCOMPARE(variables.remove(QStringLiteral("f")), 1);
+        QVERIFY(!variables.contains(QStringLiteral("f")));
+        QCOMPARE(variables.remove(QStringLiteral("f")), 0);
+        variables.modify(QStringLiteral("f"), Analitza::Expression(QStringLiteral("(x,y)->x+y")));
+        QVERIFY(!variables.functionOverload(QStringLiteral("f"), 1));
+    }
     void copyRenameAndRedefine()
     {
         Analitza::Variables original;
