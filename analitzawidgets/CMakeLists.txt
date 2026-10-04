@@ -36,3 +36,7 @@ install(FILES
 
     DESTINATION ${ANALITZA_INCLUDE_INSTALL_DIR}/analitzagui/ COMPONENT Devel
 )
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

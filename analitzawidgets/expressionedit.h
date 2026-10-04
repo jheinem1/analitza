@@ -137,6 +137,7 @@ class ANALITZAWIDGETS_EXPORT ExpressionEdit : public QPlainTextEdit
     protected:
         /** Inherited from QTextEdit, just deals with the menu. */
         void contextMenuEvent(QContextMenuEvent * e) override;
+        void changeEvent(QEvent *event) override;
     
     private:
         bool returnPress();

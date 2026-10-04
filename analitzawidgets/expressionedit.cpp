@@ -43,7 +43,7 @@ class HelpTip : public QLabel
         {
             setFrameShape(QFrame::Box);
             setFocusPolicy(Qt::NoFocus);
-            setAutoFillBackground(false);
+            setAutoFillBackground(true);
             
             QPalette p=palette();
             p.setColor(backgroundRole(), p.color(QPalette::Active, QPalette::ToolTipBase));
@@ -197,8 +197,13 @@ void ExpressionEdit::keyPressEvent(QKeyEvent * e)
             break;
         case Qt::Key_Return:
         case Qt::Key_Enter:
-            if(completionView->isVisible() && !completionView->selectionModel()->selectedRows().isEmpty()) 
-                completed(m_completer->currentCompletion());
+        case Qt::Key_Tab:
+            if(completionView->isVisible() && completionView->currentIndex().isValid()) {
+                const auto selected = completionView->currentIndex().siblingAtColumn(m_completer->completionColumn());
+                completed(selected.data(m_completer->completionRole()).toString());
+            } else if (e->key() == Qt::Key_Tab) {
+                QPlainTextEdit::keyPressEvent(e);
+            }
             else if(returnPress())
                     QPlainTextEdit::keyPressEvent(e);
             completionView->hide();
@@ -350,6 +355,15 @@ void ExpressionEdit::helper(const QString& msg, const QPoint& p)
     }
 }
 
+void ExpressionEdit::changeEvent(QEvent *event)
+{
+    QPlainTextEdit::changeEvent(event);
+    if (event->type() == QEvent::ApplicationPaletteChange)
+        setCorrect(m_correct);
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange)
+        m_highlight->rehighlight();
+}
+
 void ExpressionEdit::setCorrect(bool correct)
 {
     QPalette p=qApp->palette();
@@ -358,12 +372,15 @@ void ExpressionEdit::setCorrect(bool correct)
     
     if(m_correct && !isMathML())
         c = p.base().color();
-    else if(m_correct)
-        c = QColor(255,255,200);
-    else //if mathml
-        c = QColor(255,222,222);
+    else {
+        const QColor tint = m_correct ? QColor(Qt::yellow) : QColor(Qt::red);
+        const QColor base = p.base().color();
+        c = QColor::fromRgbF(base.redF() * 0.9 + tint.redF() * 0.1,
+                            base.greenF() * 0.9 + tint.greenF() * 0.1,
+                            base.blueF() * 0.9 + tint.blueF() * 0.1);
+    }
     
-    p.setColor(QPalette::Active, QPalette::Base, c);
+    p.setColor(QPalette::Base, c);
     setPalette(p);
 }
 

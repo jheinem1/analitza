@@ -18,6 +18,7 @@
  *************************************************************************************/
 
 #include "algebrahighlighter.h"
+#include "contrastcolors_p.h"
 #include <QGuiApplication>
 #include <QStack>
 #include <QPalette>
@@ -71,12 +72,15 @@ void AlgebraHighlighter::highlightBlock(const QString &text)
         m_pos=text.length();
     
     QPalette pal=qApp->palette();
-    QColor number(pal.color(QPalette::Active, QPalette::Link));
-    QColor variable(pal.color(QPalette::Active, QPalette::LinkVisited));
-    QColor comment(pal.color(QPalette::Active, QPalette::Window));
-    QColor id(150,0,50);
-    QColor string(0xbb,0,0);
-    QColor uncorrect(Qt::red);
+    const QColor base = pal.color(QPalette::Base);
+    const QColor textColor = pal.color(QPalette::Text);
+    auto readable = [&](const QColor &color) { return Analitza::readableColor(color, base, textColor); };
+    QColor number(readable(pal.color(QPalette::Active, QPalette::Link)));
+    QColor variable(readable(pal.color(QPalette::Active, QPalette::LinkVisited)));
+    QColor comment(readable(pal.color(QPalette::PlaceholderText)));
+    QColor id(readable(QColor(150,0,50)));
+    QColor string(readable(QColor(0xbb,0,0)));
+    QColor uncorrect(readable(Qt::red));
     m_editingParameter=0;
     m_editingName.clear();
     
@@ -97,18 +101,18 @@ void AlgebraHighlighter::highlightBlock(const QString &text)
                 setFormat(i, 1, bold);
                 setFormat(j, 1, bold);
                 if(lasttag.startsWith(QChar('/'))){
-                    setFormat(i+1, j-i-1, QColor(100,0,0));
+                    setFormat(i+1, j-i-1, readable(QColor(100,0,0)));
                     setFormat(i+1, 1, bold);
                     inside--;
                 } else if(lasttag.endsWith(QChar('/'))) {
                     setFormat(i+1, j-i-1, id);
                     setFormat(j+1, 2, bold);
                 } else if(j!=k) {
-                    setFormat(i+1, j-i-1, QColor(150,0,0));
-                    setFormat(j+1, k-j-1, QColor(150,100,0));
+                    setFormat(i+1, j-i-1, readable(QColor(150,0,0)));
+                    setFormat(j+1, k-j-1, readable(QColor(150,100,0)));
                     inside++;
                 } else {
-                    setFormat(i+1, j-i-1, QColor(150,0,0));
+                    setFormat(i+1, j-i-1, readable(QColor(150,0,0)));
                     inside++;
                 }
                 i=k;
@@ -173,7 +177,8 @@ void AlgebraHighlighter::highlightBlock(const QString &text)
                         
                         if(m_pos==lex.current.pos || m_pos==paren.top().pos) {
                             QTextCharFormat bg=bold;
-                            bg.setBackground(Qt::yellow);
+                            bg.setBackground(pal.color(QPalette::Highlight));
+                            bg.setForeground(pal.color(QPalette::HighlightedText));
                             
                             setFormat(lex.current.pos, lex.current.len, bg);
                             setFormat(paren.top().pos, paren.top().len, bg);
@@ -222,7 +227,8 @@ void AlgebraHighlighter::highlightBlock(const QString &text)
             
             if(m_editingParameter!=0 || m_editingBounds) {
                 QTextCharFormat currentComa=bold;
-                currentComa.setBackground(Qt::yellow);
+                currentComa.setBackground(pal.color(QPalette::Highlight));
+                currentComa.setForeground(pal.color(QPalette::HighlightedText));
                 setFormat(parameter.top().pos, 1, currentComa);
             }
         }
