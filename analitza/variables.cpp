@@ -106,8 +106,11 @@ void Variables::setFunctionOverload(const QString& name, const Expression& funct
     Q_ASSERT(contains(name) && function.isLambda());
     auto& functions = m_functionOverloads[name];
     const int count = function.bvarList().size();
+    const Object* tree = function.tree();
+    if (tree->isContainer() && static_cast<const Container*>(tree)->containerType() == Container::math)
+        tree = static_cast<const Container*>(tree)->m_params.first();
     delete functions.value(count);
-    functions.insert(count, function.tree()->copy());
+    functions.insert(count, tree->copy());
 }
 
 const Object* Variables::functionOverload(const QString& name, int argumentCount) const
